@@ -3,15 +3,18 @@ import praw
 import time
 from datetime import datetime
 import os
+import re
+
 from heapq import nlargest
 
 from newspaper import Article
+from urllib import request
+from bs4 import BeautifulSoup
 
 import spacy
 nlp = spacy.load('en_core_web_sm')
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
-
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -20,42 +23,46 @@ nlp = spacy.load("en_core_web_sm")
         # spacy en_core_web_trf
         # most accurate
 
+
 def bot_login():
         print ("Logging in...")
         r = praw.Reddit(username = config.username,
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Expert Identifier v0.2")
+                        user_agent = "Sneakpeakbot v0.3")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id):
 
-    for submission in r.subreddit('sgbotstest').new(limit = 5):
+    for submission in r.subreddit('Singapore').new(limit = 3):
+
+        fullreply=[]
 
         if (submission.id not in replied_articles_id and not submission.url.startswith("https://www.reddit.com") and submission.selftext==""):
 
             articlereply="There was an error reading the article text. This may be due to a paywall"
 
-            print(submission.url)
+            #print(submission.url)
 
             article_summary = get_summary(submission.url)
 
-            print("getting article summary")
+            #print("getting article summary")
 
             if(article_summary=="READ TEXT ERROR"):
-                print("Error reading text")
+                #print("Error reading text")
                 articlereply = "There was an error reading the article text. This may be due to a paywall."
             elif(article_summary=="TEXT LENGTH ERROR"):
-                print("Text Length Error")
+                #print("Text Length Error")
             else:
-                print("Text reading successful")
+                #print("Text reading successful")
                 articlereply = get_summary(submission.url)
+                article_title = get_htmltitle(submission.url)
+                fullreply = "#" + article_title + " \n\n"
 
-            fullreply = articlereply + "\n\n***\n\n" + "[v0.2 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") by Sg_Wormsblink and running on Raspberry Pi400 | PM SG_wormsbot if bot is down."
-            fullreply = fullreply + "\n\n This is a test on my main account, will transfer to u/SG_wormsbot when karma / age requirements are met. Mods if you want to greenlight the bot PM me"
+            fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.3 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") by Sg_Wormsblink and running on Raspberry Pi400 | PM SG_wormsbot if bot is down."
 
             submission.reply(fullreply)
 
@@ -65,8 +72,8 @@ def run_bot(r, replied_articles_id):
         with open ("replied_articles.txt", "a") as f:
                 f.write(submission.id + "\n")
 
-    print("Sleeping for 10 seconds")
-    time.sleep(10)
+    print("Sleeping for 30 seconds")
+    time.sleep(30)
 
 def get_replied_articles():
         if not os.path.isfile("replied_articles.txt"):
@@ -79,6 +86,17 @@ def get_replied_articles():
 
         return replied_articles_id
 
+def get_htmltitle(article_url):
+
+    html = request.urlopen(article_url).read().decode('utf8')
+    html[:60]
+
+    soup = BeautifulSoup(html, 'html.parser')
+    bs_title = soup.find('title')
+
+    cleaned_title = bs_title.string.split("|", 1)[0]
+
+    return cleaned_title
 
 
 def get_summary(article_url):
@@ -86,6 +104,7 @@ def get_summary(article_url):
     article = Article(article_url)
     article.download()
     article.parse()
+    
     newstext = article.text
 
     #print(newstext)
@@ -93,18 +112,14 @@ def get_summary(article_url):
     if not newstext:
         return("READ TEXT ERROR")
     else:
-        if (len(newstext)<400):
-            summarized_article = newstext
-        elif (len(newstext)<800):
-            summarized_article = summarize_text(newstext,0.5)
-        elif (len(newstext)>1600):
-            summarized_article = summarize_text(newstext,0.25)
-        elif (len(newstext)<3200):
-            summarized_article = summarize_text(newstext,0.125)
+        if (len(newstext)>800):
+            summarized_article = summarize_text(newstext, 800/len(newstext))
         else:
-            return("TEXT LENGTH ERROR")
+            summarized_article = newstext
 
-    return summarized_article
+    cleaned_article = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', summarized_article)
+
+    return cleaned_article
 
 def summarize_text(text, per):
     

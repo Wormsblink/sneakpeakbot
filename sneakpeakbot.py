@@ -33,7 +33,7 @@ def bot_login():
 
 def run_bot(r, replied_articles_id):
 
-    for submission in r.subreddit('Singapore').new(limit = 5):
+    for submission in r.subreddit('sgbotstest').new(limit = 5):
 
         if (submission.id not in replied_articles_id and not submission.url.startswith("https://www.reddit.com") and submission.selftext==""):
 
@@ -107,6 +107,9 @@ def get_summary(article_url):
     return summarized_article
 
 def summarize_text(text, per):
+    
+    ##
+
     doc= nlp(text)
     tokens=[token.text for token in doc]
     word_frequencies={}
@@ -138,7 +141,7 @@ def summarize_text(text, per):
     
     final_summary=[word.text for word in summary]
     summary=''.join(final_summary)
-    
+
     return summary
 
 # Main

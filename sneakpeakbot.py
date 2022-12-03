@@ -30,50 +30,60 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v0.3")
+                        user_agent = "Sneakpeakbot v0.5")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id):
 
-    for submission in r.subreddit('Singapore').new(limit = 3):
+    for comment in r.subreddit('Singapore').comments(limit = 20):
+        if ("!sneakpeak" in comment.body): 
+            
+            #print("bot was called")
 
-        fullreply=[]
+            submission=comment.submission
 
-        if (submission.id not in replied_articles_id and not submission.url.startswith("https://www.reddit.com") and submission.selftext==""):
+            #print("found submission")
 
-            articlereply="There was an error reading the article text. This may be due to a paywall"
+            fullreply=""
 
-            #print(submission.url)
+            if (submission.id not in replied_articles_id and not submission.url.startswith("https://www.reddit.com") and submission.selftext==""):
 
-            article_summary = get_summary(submission.url)
+                articlereply="There was an error reading the article text. This may be due to a paywall"
 
-            #print("getting article summary")
+                #print(submission.url)
 
-            if(article_summary=="READ TEXT ERROR"):
-                #print("Error reading text")
-                articlereply = "There was an error reading the article text. This may be due to a paywall."
-            elif(article_summary=="TEXT LENGTH ERROR"):
-                #print("Text Length Error")
-            else:
-                #print("Text reading successful")
-                articlereply = get_summary(submission.url)
-                article_title = get_htmltitle(submission.url)
-                fullreply = "#" + article_title + " \n\n"
+                article_summary = get_summary(submission.url)
 
-            fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.3 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") by Sg_Wormsblink and running on Raspberry Pi400 | PM SG_wormsbot if bot is down."
+                #print("getting article summary")
 
-            submission.reply(fullreply)
+                if(article_summary=="READ TEXT ERROR"):
+                    print("Error reading text")
+                    articlereply = "There was an error reading the article text. This may be due to a paywall."
+                elif(article_summary=="TEXT LENGTH ERROR"):
+                    print("Text Length Error")
+                else:
+                    print("Text reading successful")
+                    articlereply = get_summary(submission.url)
+                    article_title = get_htmltitle(submission.url)
+                    fullreply = "#" + article_title + " \n\n"
 
-            print("Replied to submission " + submission.id + " by " + submission.author.name)
-            replied_articles_id.append(submission.id)
+                fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.5 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down. Now running on main account until bot has sufficient karma/age"
+
+                submission.reply(fullreply)
+
+                print("Replied to submission " + submission.id + " by " + submission.author.name)
         
-        with open ("replied_articles.txt", "a") as f:
-                f.write(submission.id + "\n")
+                with open ("replied_articles.txt", "a") as f:
+                    f.write(submission.id + "\n")
 
-    print("Sleeping for 30 seconds")
-    time.sleep(30)
+            else:
+                fullreply=""
+                #print("submission duplicate detected")
+
+    #print("Sleeping for 10 seconds")
+    time.sleep(10)
 
 def get_replied_articles():
         if not os.path.isfile("replied_articles.txt"):
@@ -88,13 +98,15 @@ def get_replied_articles():
 
 def get_htmltitle(article_url):
 
-    html = request.urlopen(article_url).read().decode('utf8')
+    requested_site = request.Request(article_url, headers={"User-Agent": "Mozilla/5.0"})
+    html = request.urlopen(requested_site).read().decode('utf8')
     html[:60]
 
     soup = BeautifulSoup(html, 'html.parser')
     bs_title = soup.find('title')
 
     cleaned_title = bs_title.string.split("|", 1)[0]
+    cleaned_title = cleaned_title.split("-", 1)[0]
 
     return cleaned_title
 
@@ -112,10 +124,15 @@ def get_summary(article_url):
     if not newstext:
         return("READ TEXT ERROR")
     else:
-        if (len(newstext)>800):
-            summarized_article = summarize_text(newstext, 800/len(newstext))
-        else:
-            summarized_article = newstext
+
+        summarized_article = newstext
+        percentSentences = 80
+        
+        if (len(summarized_article)>800):
+            while (len(summarized_article)>800):
+                #print("attempting to summarize")
+                #print(len(summarized_article))
+                summarized_article = summarize_text(summarized_article, percentSentences/100)
 
     cleaned_article = re.sub(r'\w+:\/{2}[\d\w-]+(\.[\d\w-]+)*(?:(?:\/[^\s/]*))*', '', summarized_article)
 

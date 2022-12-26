@@ -30,7 +30,7 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v0.5")
+                        user_agent = "Sneakpeakbot v0.6")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
@@ -46,41 +46,49 @@ def run_bot(r, replied_articles_id):
 
             #print("found submission")
 
-            fullreply=""
+            if (submission.selftext=="" and not submission.url.startswith("https://www.reddit.com")):
 
-            if (submission.id not in replied_articles_id and not submission.url.startswith("https://www.reddit.com") and submission.selftext==""):
+                fullreply=""
+                articlereply=""
 
-                articlereply="There was an error reading the article text. This may be due to a paywall"
-
-                #print(submission.url)
-
-                article_summary = get_summary(submission.url)
-
-                #print("getting article summary")
-
-                if(article_summary=="READ TEXT ERROR"):
-                    print("Error reading text")
-                    articlereply = "There was an error reading the article text. This may be due to a paywall."
-                elif(article_summary=="TEXT LENGTH ERROR"):
-                    print("Text Length Error")
+                if (submission.id in replied_articles_id):
+                    fullreply=""
+                    #print("Duplicate found. Previously replied to comment " + submission.id)
                 else:
-                    print("Text reading successful")
-                    articlereply = get_summary(submission.url)
-                    article_title = get_htmltitle(submission.url)
-                    fullreply = "#" + article_title + " \n\n"
 
-                fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.5 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down. Now running on main account until bot has sufficient karma/age"
+                    articlereply="There was an error reading the article text. This may be due to a paywall"
 
-                submission.reply(fullreply)
+                    #print(submission.url)
 
-                print("Replied to submission " + submission.id + " by " + submission.author.name)
+                    article_summary = get_summary(submission.url)
+
+                    #print("getting article summary")
+
+                    if(article_summary=="READ TEXT ERROR"):
+                        print("Error reading text")
+                        articlereply = "There was an error reading the article text. This may be due to a paywall."
+                    elif(article_summary=="TEXT LENGTH ERROR"):
+                        print("Text Length Error")
+                    else:
+                        print("Text reading successful")
+                        articlereply = get_summary(submission.url)
+                        article_title = get_htmltitle(submission.url)
+                        fullreply = "#" + article_title + " \n\n"
+
+                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.6 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+
+                    #print(fullreply)
+
+                    submission.reply(fullreply)
+
+                    print("Replied to submission " + submission.id + " by " + submission.author.name)
         
-                with open ("replied_articles.txt", "a") as f:
-                    f.write(submission.id + "\n")
+                    with open ("replied_articles.txt", "a") as f:
+                        f.write(submission.id + "\n")
 
             else:
                 fullreply=""
-                #print("submission duplicate detected")
+                #print("wrong submission type")
 
     #print("Sleeping for 10 seconds")
     time.sleep(10)
@@ -126,10 +134,10 @@ def get_summary(article_url):
     else:
 
         summarized_article = newstext
-        percentSentences = 80
+        percentSentences = 90
         
-        if (len(summarized_article)>800):
-            while (len(summarized_article)>800):
+        if (len(summarized_article)>8000):
+            while (len(summarized_article)>8000):
                 #print("attempting to summarize")
                 #print(len(summarized_article))
                 summarized_article = summarize_text(summarized_article, percentSentences/100)

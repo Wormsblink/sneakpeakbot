@@ -30,7 +30,7 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v0.6")
+                        user_agent = "Sneakpeakbot v0.7")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
@@ -60,7 +60,10 @@ def run_bot(r, replied_articles_id):
 
                     #print(submission.url)
 
-                    article_summary = get_summary(submission.url)
+                    try:
+                        article_summary = get_summary(submission.url)
+                    except:
+                        article_summary = "READ TEXT ERROR"
 
                     #print("getting article summary")
 
@@ -75,7 +78,7 @@ def run_bot(r, replied_articles_id):
                         article_title = get_htmltitle(submission.url)
                         fullreply = "#" + article_title + " \n\n"
 
-                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.6 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.7 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
 
                     #print(fullreply)
 

@@ -73,7 +73,7 @@ def run_bot(r, replied_articles_id):
                     elif(article_summary=="TEXT LENGTH ERROR"):
                         print("Text Length Error")
                     else:
-                        print("Text reading successful")
+                        #print("Text reading successful")
                         articlereply = get_summary(submission.url)
                         article_title = get_htmltitle(submission.url)
                         fullreply = "#" + article_title + " \n\n"

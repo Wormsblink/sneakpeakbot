@@ -35,9 +35,9 @@ def bot_login():
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
-def run_bot(r, replied_articles_id):
+def run_bot(r, replied_articles_id,approvedlist):
 
-    for comment in r.subreddit('Singapore').comments(limit = 20):
+    for comment in r.subreddit('sgbotstest').comments(limit = 20):
         if ("!sneakpeak" in comment.body): 
             
             #print("bot was called")
@@ -46,7 +46,7 @@ def run_bot(r, replied_articles_id):
 
             #print("found submission")
 
-            if (submission.selftext=="" and not submission.url.startswith("https://www.reddit.com")):
+            if (submission.selftext=="" and submission.url.startswith(tuple(approvedlist))):
 
                 fullreply=""
                 articlereply=""
@@ -68,17 +68,18 @@ def run_bot(r, replied_articles_id):
                     #print("getting article summary")
 
                     if(article_summary=="READ TEXT ERROR"):
-                        print("Error reading text")
+                        #print("Error reading text")
+                        
                         articlereply = "There was an error reading the article text. This may be due to a paywall."
                     elif(article_summary=="TEXT LENGTH ERROR"):
                         print("Text Length Error")
                     else:
                         #print("Text reading successful")
                         articlereply = get_summary(submission.url)
-                        article_title = get_htmltitle(submission.url)
+                        article_title = "Original Title: " + get_htmltitle(submission.url)
                         fullreply = "#" + article_title + " \n\n"
 
-                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.7 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.8 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
 
                     #print(fullreply)
 
@@ -107,6 +108,13 @@ def get_replied_articles():
 
         return replied_articles_id
 
+def get_approved_list():
+    with open("approved_sites_list.txt", "r") as f:
+        approved_list = f.read()
+        approved_list = approved_list.split("\n")
+
+    return approved_list
+
 def get_htmltitle(article_url):
 
     requested_site = request.Request(article_url, headers={"User-Agent": "Mozilla/5.0"})
@@ -126,6 +134,10 @@ def get_summary(article_url):
 
     article = Article(article_url)
     article.download()
+
+    if(html.find(class_='paid-premium st-flag-1')):
+        return("READ TEXT ERROR")
+    
     article.parse()
     
     newstext = article.text
@@ -191,4 +203,4 @@ def summarize_text(text, per):
 
 r = bot_login()
 while True:
-    run_bot(r, get_replied_articles())
+    run_bot(r, get_replied_articles(),get_approved_list())

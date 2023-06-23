@@ -30,14 +30,14 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v0.8")
+                        user_agent = "Sneakpeakbot v0.9")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('singapore').new(limit=10):
+    for submission in r.subreddit('sgbotstest').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -45,7 +45,7 @@ def run_bot(r, replied_articles_id,approvedlist):
 
             #submission=comment.submission
 
-            if (submission.selftext=="" and submission.url.startswith(tuple(approvedlist))):
+            if (submission.selftext=="" and not submission.url.startswith("https://www.reddit.com") and submission.url.startswith(tuple(approvedlist))):
 
                 fullreply=""
                 articlereply=""
@@ -78,7 +78,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         article_title = "Original Title: " + get_htmltitle(submission.url)
                         fullreply = "#" + article_title + " \n\n"
 
-                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.8 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.9 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
 
                     #print(fullreply)
 
@@ -123,10 +123,21 @@ def get_htmltitle(article_url):
     soup = BeautifulSoup(html, 'html.parser')
     bs_title = soup.find('title')
 
-    cleaned_title = bs_title.string.split("|", 1)[0]
-    cleaned_title = cleaned_title.split("-", 1)[0]
+    parsed_title = "Error obtaining title"
 
-    return cleaned_title
+    cleaned_title = bs_title.string.split("|", 1)[0]
+
+    split_title = cleaned_title.split(" - ")
+
+    parsed_title = split_title[0]
+
+    if (len(split_title) > 1):
+        for title_segment in split_title[1:]:
+            if (not(title_segment[0].isupper())):
+                parsed_title = parsed_title + " - " + title_segment
+
+
+    return parsed_title
 
 
 def get_summary(article_url):

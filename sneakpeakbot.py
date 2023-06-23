@@ -30,14 +30,14 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v0.9")
+                        user_agent = "Sneakpeakbot v0.9b")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('sgbotstest').new(limit=10):
+    for submission in r.subreddit('singapore').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -45,7 +45,7 @@ def run_bot(r, replied_articles_id,approvedlist):
 
             #submission=comment.submission
 
-            if (submission.selftext=="" and not submission.url.startswith("https://www.reddit.com") and submission.url.startswith(tuple(approvedlist))):
+            if ((submission.selftext=="" and submission.url.startswith(tuple(approvedlist))) and not submission.url.startswith("https://www.reddit.com")):
 
                 fullreply=""
                 articlereply=""
@@ -78,7 +78,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         article_title = "Original Title: " + get_htmltitle(submission.url)
                         fullreply = "#" + article_title + " \n\n"
 
-                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.9 (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.9b (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
 
                     #print(fullreply)
 

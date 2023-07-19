@@ -1,5 +1,9 @@
+##first pip install spacy, newspaper3k, praw, bs4, pandas
+##then spacy download en_core_web_trf
+
 import config
 import praw
+import pandas as pd
 import time
 from datetime import datetime
 import os
@@ -16,10 +20,10 @@ nlp = spacy.load('en_core_web_sm')
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
 
-nlp = spacy.load("en_core_web_sm")
-
         # spacy en_core_web_sm
-        # most efficient 
+        # most efficient
+        # spacy en_core_web_md
+        # middle ground 
         # spacy en_core_web_trf
         # most accurate
 
@@ -30,7 +34,7 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v0.9b")
+                        user_agent = "Sneakpeakbot v1.0")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
@@ -45,49 +49,57 @@ def run_bot(r, replied_articles_id,approvedlist):
 
             #submission=comment.submission
 
-            if ((submission.selftext=="" and submission.url.startswith(tuple(approvedlist))) and not submission.url.startswith("https://www.reddit.com")):
+            if (submission.selftext=="" and not submission.url.startswith("https://www.reddit.com") and submission.url.startswith(tuple(approvedlist))):
 
                 fullreply=""
                 articlereply=""
+                similarity_reply=""
 
                 if (submission.id in replied_articles_id):
                     fullreply=""
-                    #print("Duplicate found. Previously replied to comment " + submission.id)
                 else:
 
                     articlereply="There was an error reading the article text. This may be due to a paywall"
-
-                    #print(submission.url)
 
                     try:
                         article_summary = get_summary(submission.url)
                     except:
                         article_summary = "READ TEXT ERROR"
 
-                    #print("getting article summary")
-
                     if(article_summary=="READ TEXT ERROR"):
-                        #print("Error reading text")
                         
                         articlereply = "There was an error reading the article text. This may be due to a paywall."
                     elif(article_summary=="TEXT LENGTH ERROR"):
                         print("Text Length Error")
                     else:
-                        #print("Text reading successful")
                         articlereply = get_summary(submission.url)
-                        article_title = "Original Title: " + get_htmltitle(submission.url)
-                        fullreply = "#" + article_title + " \n\n"
+                        article_title = get_htmltitle(submission.url)
+                
+                        replied_database = pd.read_csv("replied_articles.csv",index_col=[0])
 
-                    fullreply = fullreply + articlereply + "\n\n***\n\n" + "[v0.9b (Beta)](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                        similar_database = check_similarity(article_title, replied_database)
+                        max_similarity_record = similar_database[similar_database.similarity_value == similar_database.similarity_value.max()]
 
-                    #print(fullreply)
+                        #print(max_similarity_record)
 
+                        if (not(max_similarity_record.empty)):
+                            if (max_similarity_record.loc[0]["similarity_value"]>0.80):
+                                similarity_reply = "***\n\n" + "The article title is " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
+
+                        append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title]})
+                        
+
+                        replied_database = pd.concat([replied_database, append_to_database])
+                        replied_database.to_csv('replied_articles.csv')
+
+                        print("New entry for " + submission.id + " in Database at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+                        fullreply = "Original Title: " + article_title + " \n\n"
+
+                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.0](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
 
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
-        
-                    with open ("replied_articles.txt", "a") as f:
-                        f.write(submission.id + "\n")
 
             else:
                 fullreply=""
@@ -97,13 +109,15 @@ def run_bot(r, replied_articles_id,approvedlist):
     time.sleep(10)
 
 def get_replied_articles():
-        if not os.path.isfile("replied_articles.txt"):
-                open("replied_articles.txt", 'w').close()
+        
+        if not os.path.isfile("replied_articles.csv"):
+                blank_database=pd.DataFrame(columns=['id','title'])
+                blank_database.to_csv("replied_articles.csv")
                 replied_articles_id = []
         else:
-                with open("replied_articles.txt", "r") as f:
-                        replied_articles_id = f.read()
-                        replied_articles_id = replied_articles_id.split("\n")
+                replied_database = pd.read_csv("replied_articles.csv")
+                replied_articles_id = replied_database['id'].tolist()
+                #replied_articles_id = replied_articles_id.split("\n")
 
         return replied_articles_id
 
@@ -139,6 +153,29 @@ def get_htmltitle(article_url):
 
     return parsed_title
 
+def check_similarity(article_title, replied_database):
+
+    similar_database = replied_database.copy()
+
+    similar_database["similarity_value"] = ""
+
+    #temp_article_title = nlp(' '.join([str(t) for t in article_title if not t in list(STOP_WORDS)]))
+
+    temp_article_title = nlp(' '.join([str(t) for t in article_title.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+    
+    print(temp_article_title)
+
+    replied_articles_titles = replied_database["title"].tolist()
+    
+    for replied_title in replied_articles_titles:
+        temp_replied_title = nlp(' '.join([str(t) for t in replied_title.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+        
+        print(temp_replied_title)
+
+        similarity_value = temp_article_title.similarity(temp_replied_title)
+        similar_database["similarity_value"][similar_database.title == replied_title] = similarity_value
+
+    return similar_database
 
 def get_summary(article_url):
 
@@ -173,8 +210,6 @@ def get_summary(article_url):
     return cleaned_article
 
 def summarize_text(text, per):
-    
-    ##
 
     doc= nlp(text)
     tokens=[token.text for token in doc]
@@ -213,5 +248,13 @@ def summarize_text(text, per):
 # Main
 
 r = bot_login()
-while True:
-    run_bot(r, get_replied_articles(),get_approved_list())
+
+run_bot(r, get_replied_articles(),get_approved_list())
+
+#while True:
+#   try:
+#       run_bot(r, get_replied_articles(),get_approved_list())
+#       #time.sleep(10)
+#   except Exception as e:
+#       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(e))
+#       #time.sleep(10)

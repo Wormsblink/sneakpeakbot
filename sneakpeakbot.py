@@ -105,9 +105,6 @@ def run_bot(r, replied_articles_id,approvedlist):
                 fullreply=""
                 #print("wrong submission type")
 
-    #print("Sleeping for 10 seconds")
-    time.sleep(10)
-
 def get_replied_articles():
         
         if not os.path.isfile("replied_articles.csv"):
@@ -249,12 +246,12 @@ def summarize_text(text, per):
 
 r = bot_login()
 
-run_bot(r, get_replied_articles(),get_approved_list())
+#run_bot(r, get_replied_articles(),get_approved_list())
 
-#while True:
-#   try:
-#       run_bot(r, get_replied_articles(),get_approved_list())
-#       #time.sleep(10)
-#   except Exception as e:
-#       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(e))
-#       #time.sleep(10)
+while True:
+   try:
+       run_bot(r, get_replied_articles(),get_approved_list())
+       time.sleep(10)
+   except Exception as e:
+       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(e))
+       time.sleep(3600)

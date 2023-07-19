@@ -49,7 +49,7 @@ def run_bot(r, replied_articles_id,approvedlist):
 
             #submission=comment.submission
 
-            if (submission.selftext=="" and not submission.url.startswith("https://www.reddit.com") and submission.url.startswith(tuple(approvedlist))):
+            if ((submission.selftext=="" and submission.url.startswith(tuple(approvedlist))) and not submission.url.startswith("https://www.reddit.com")):
 
                 fullreply=""
                 articlereply=""

@@ -121,7 +121,7 @@ def get_replied_articles():
 def get_approved_list():
     with open("approved_sites_list.txt", "r") as f:
         approved_list = f.read()
-        approved_list = approved_list.split("\n")
+        approved_list = list(filter(None, approved_list.split("\n")))
 
     return approved_list
 

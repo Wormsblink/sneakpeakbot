@@ -37,14 +37,14 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.1")
+                        user_agent = "Sneakpeakbot v1.1b")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('sgbotstest').new(limit=10):
+    for submission in r.subreddit('singapore').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -52,7 +52,7 @@ def run_bot(r, replied_articles_id,approvedlist):
 
             #submission=comment.submission
 
-            if (submission.selftext=="" and not submission.url.startswith("https://www.reddit.com") and submission.url.startswith(tuple(approvedlist))):
+            if ((submission.selftext=="" and submission.url.startswith(tuple(approvedlist))) and not submission.url.startswith("https://www.reddit.com")):
 
                 fullreply=""
                 articlereply=""
@@ -89,17 +89,15 @@ def run_bot(r, replied_articles_id,approvedlist):
                             if (max_similarity_record.loc[0]["similarity_value"]>0.70):
                                 similarity_reply = "***\n\n" + "The article title is " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
 
-                        
-
                         print("New entry for " + submission.id + " in Database at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
                         fullreply = "Original Title: " + article_title + " \n\n"
 
-                    append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title]})
-                    replied_database = pd.concat([replied_database, append_to_database])
-                    replied_database.to_csv('replied_articles.csv')
+                        append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title]})
+                        replied_database = pd.concat([replied_database, append_to_database])
+                        replied_database.to_csv('replied_articles.csv')
 
-                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.1](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.1b](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
 
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
@@ -109,7 +107,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                 #print("wrong submission type")
 
     #print("Sleeping for 10 seconds")
-    time.sleep(10)
+    #time.sleep(10)
 
 def get_replied_articles():
         
@@ -127,7 +125,7 @@ def get_replied_articles():
 def get_approved_list():
     with open("approved_sites_list.txt", "r") as f:
         approved_list = f.read()
-        approved_list = approved_list.split("\n")
+        approved_list = list(filter(None, approved_list.split("\n")))
 
     return approved_list
 
@@ -252,12 +250,12 @@ def summarize_text(text, per):
 
 r = bot_login()
 
-run_bot(r, get_replied_articles(),get_approved_list())
+#run_bot(r, get_replied_articles(),get_approved_list())
 
-#while True:
-#   try:
-#       run_bot(r, get_replied_articles(),get_approved_list())
-#       #time.sleep(10)
-#   except Exception as e:
-#       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(e))
-#       #time.sleep(10)
+while True:
+   try:
+       run_bot(r, get_replied_articles(),get_approved_list())
+       time.sleep(10)
+   except Exception as e:
+       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(e))
+       time.sleep(36000)

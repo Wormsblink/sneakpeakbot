@@ -1,5 +1,5 @@
 ##first pip install spacy, newspaper3k, praw, bs4, pandas
-##then spacy download en_core_web_trf
+##then spacy download en_core_web_sm
 
 import config
 import praw
@@ -8,6 +8,7 @@ import time
 from datetime import datetime
 import os
 import re
+import warnings
 
 from heapq import nlargest
 
@@ -19,6 +20,8 @@ import spacy
 nlp = spacy.load('en_core_web_sm')
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
+
+warnings.filterwarnings("ignore",message=r"\[W007\]",category=UserWarning)
 
         # spacy en_core_web_sm
         # most efficient
@@ -34,14 +37,14 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.0")
+                        user_agent = "Sneakpeakbot v1.1")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('singapore').new(limit=10):
+    for submission in r.subreddit('sgbotstest').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -49,7 +52,7 @@ def run_bot(r, replied_articles_id,approvedlist):
 
             #submission=comment.submission
 
-            if ((submission.selftext=="" and submission.url.startswith(tuple(approvedlist))) and not submission.url.startswith("https://www.reddit.com")):
+            if (submission.selftext=="" and not submission.url.startswith("https://www.reddit.com") and submission.url.startswith(tuple(approvedlist))):
 
                 fullreply=""
                 articlereply=""
@@ -83,20 +86,20 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #print(max_similarity_record)
 
                         if (not(max_similarity_record.empty)):
-                            if (max_similarity_record.loc[0]["similarity_value"]>0.80):
+                            if (max_similarity_record.loc[0]["similarity_value"]>0.70):
                                 similarity_reply = "***\n\n" + "The article title is " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
 
-                        append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title]})
                         
-
-                        replied_database = pd.concat([replied_database, append_to_database])
-                        replied_database.to_csv('replied_articles.csv')
 
                         print("New entry for " + submission.id + " in Database at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
                         fullreply = "Original Title: " + article_title + " \n\n"
 
-                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.0](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title]})
+                    replied_database = pd.concat([replied_database, append_to_database])
+                    replied_database.to_csv('replied_articles.csv')
+
+                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.1](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
 
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
@@ -104,6 +107,9 @@ def run_bot(r, replied_articles_id,approvedlist):
             else:
                 fullreply=""
                 #print("wrong submission type")
+
+    #print("Sleeping for 10 seconds")
+    time.sleep(10)
 
 def get_replied_articles():
         
@@ -121,7 +127,7 @@ def get_replied_articles():
 def get_approved_list():
     with open("approved_sites_list.txt", "r") as f:
         approved_list = f.read()
-        approved_list = list(filter(None, approved_list.split("\n")))
+        approved_list = approved_list.split("\n")
 
     return approved_list
 
@@ -152,7 +158,7 @@ def get_htmltitle(article_url):
 
 def check_similarity(article_title, replied_database):
 
-    similar_database = replied_database.copy()
+    similar_database = replied_database.copy().tail(min(len(replied_database.index),100))
 
     similar_database["similarity_value"] = ""
 
@@ -160,14 +166,14 @@ def check_similarity(article_title, replied_database):
 
     temp_article_title = nlp(' '.join([str(t) for t in article_title.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
     
-    print(temp_article_title)
+    #print(temp_article_title)
 
     replied_articles_titles = replied_database["title"].tolist()
     
     for replied_title in replied_articles_titles:
         temp_replied_title = nlp(' '.join([str(t) for t in replied_title.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
         
-        print(temp_replied_title)
+        #print(temp_replied_title)
 
         similarity_value = temp_article_title.similarity(temp_replied_title)
         similar_database["similarity_value"][similar_database.title == replied_title] = similarity_value
@@ -246,12 +252,12 @@ def summarize_text(text, per):
 
 r = bot_login()
 
-#run_bot(r, get_replied_articles(),get_approved_list())
+run_bot(r, get_replied_articles(),get_approved_list())
 
-while True:
-   try:
-       run_bot(r, get_replied_articles(),get_approved_list())
-       time.sleep(10)
-   except Exception as e:
-       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(e))
-       time.sleep(3600)
+#while True:
+#   try:
+#       run_bot(r, get_replied_articles(),get_approved_list())
+#       #time.sleep(10)
+#   except Exception as e:
+#       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(e))
+#       #time.sleep(10)

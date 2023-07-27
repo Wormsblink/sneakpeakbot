@@ -37,7 +37,7 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.1b")
+                        user_agent = "Sneakpeakbot v1.1c")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
@@ -86,7 +86,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #print(max_similarity_record)
 
                         if (not(max_similarity_record.empty)):
-                            if (max_similarity_record.loc[0]["similarity_value"]>0.70):
+                            if (max_similarity_record.loc[0]["similarity_value"]>0.90):
                                 similarity_reply = "***\n\n" + "The article title is " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
 
                         print("New entry for " + submission.id + " in Database at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
@@ -97,7 +97,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         replied_database = pd.concat([replied_database, append_to_database])
                         replied_database.to_csv('replied_articles.csv')
 
-                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.1b](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.1c](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
 
                     print("Replied to submission " + submission.id + " by " + submission.author.name)

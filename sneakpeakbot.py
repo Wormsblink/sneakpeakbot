@@ -1,5 +1,6 @@
-##first pip install spacy, newspaper3k, praw, bs4, pandas
-##then spacy download en_core_web_sm
+#Python 3
+#first from termimal - pip install spacy, newspaper3k, praw, bs4, pandas
+#then spacy download en_core_web_sm (in terminal)
 
 import config
 import praw
@@ -30,21 +31,20 @@ warnings.filterwarnings("ignore",message=r"\[W007\]",category=UserWarning)
         # spacy en_core_web_trf
         # most accurate
 
-
 def bot_login():
         print ("Logging in...")
         r = praw.Reddit(username = config.username,
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.1c")
+                        user_agent = "Sneakpeakbot v1.2")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('singapore').new(limit=10):
+    for submission in r.subreddit('sgbotstest').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -55,52 +55,60 @@ def run_bot(r, replied_articles_id,approvedlist):
             if ((submission.selftext=="" and submission.url.startswith(tuple(approvedlist))) and not submission.url.startswith("https://www.reddit.com")):
 
                 fullreply=""
+                article_title="ERROR"
                 articlereply=""
                 similarity_reply=""
 
                 if (submission.id in replied_articles_id):
-                    fullreply=""
-                else:
+                    print(submission.id + " is in replied database")
+                    #stop immediately
 
-                    articlereply="There was an error reading the article text. This may be due to a paywall"
+                elif (check_top_level_comments(submission)==True):
+                    print("bot comment detected in top level comments for " + submission.id)
+                    #stop immediately
+
+                else:
+                    article_error_flag = False
 
                     try:
-                        article_summary = get_summary(submission.url)
-                    except:
-                        article_summary = "READ TEXT ERROR"
-
-                    if(article_summary=="READ TEXT ERROR"):
-                        
-                        articlereply = "There was an error reading the article text. This may be due to a paywall."
-                    elif(article_summary=="TEXT LENGTH ERROR"):
-                        print("Text Length Error")
-                    else:
                         articlereply = get_summary(submission.url)
+                    except:
+                        article_error_flag = True
+                        articlereply = "There was an error reading the article text. This may be due to a paywall."
+                        print("Article summary error flag triggered on " + submission.id)
+
+                    try:
                         article_title = get_htmltitle(submission.url)
+                    except:
+                        article_error_flag = True
+                        article_title = "There was an error reading the article title. This "
+                        print("Article title error flag triggered on " + submission.id)
+
+                    if(article_error_flag==False):
                 
                         replied_database = pd.read_csv("replied_articles.csv",index_col=[0])
-
                         similar_database = check_similarity(article_title, replied_database)
                         max_similarity_record = similar_database[similar_database.similarity_value == similar_database.similarity_value.max()]
 
                         #print(max_similarity_record)
 
                         if (not(max_similarity_record.empty)):
-                            if (max_similarity_record.loc[0]["similarity_value"]>0.90):
+                            if (max_similarity_record.loc[0]["similarity_value"]>0.85):
                                 similarity_reply = "***\n\n" + "The article title is " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
 
                         print("New entry for " + submission.id + " in Database at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-                        fullreply = "Original Title: " + article_title + " \n\n"
-
                         append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title]})
                         replied_database = pd.concat([replied_database, append_to_database])
                         replied_database.to_csv('replied_articles.csv')
+                    else:
+                        #there was an article error
 
-                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.1c](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    fullreply = "Title: " + article_title + " \n\n"
+                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.2 - error checks](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy 58th Birthday Singapore! | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
-
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
+
 
             else:
                 fullreply=""
@@ -108,6 +116,16 @@ def run_bot(r, replied_articles_id,approvedlist):
 
     #print("Sleeping for 10 seconds")
     #time.sleep(10)
+
+def check_top_level_comments(submission):
+    bot_replied_flag = False
+    for top_level_comment in submission.comments:
+        if (top_level_comment.author=="SG_wormsbot"):
+            bot_replied_flag = True
+    return bot_replied_flag
+
+
+
 
 def get_replied_articles():
         
@@ -256,6 +274,6 @@ while True:
    try:
        run_bot(r, get_replied_articles(),get_approved_list())
        time.sleep(10)
-   except Exception as e:
-       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(e))
+   except Exception as err:
+       print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(err))
        time.sleep(36000)

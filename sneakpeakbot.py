@@ -19,6 +19,9 @@ from bs4 import BeautifulSoup
 
 import spacy
 nlp = spacy.load('en_core_web_sm')
+
+nlp.Defaults.stop_words |= {"singapore", "singaporean", "sg", "mr", "mrs", "monday", "tuesday","wednesday","thursday","friday","saturday","sunday", "day", "days", "month", "months", "year", "years", "said", "wrote", "spoke", "written","contains","including","person", "man"}
+
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
 
@@ -37,14 +40,14 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.2")
+                        user_agent = "Sneakpeakbot v1.3")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('sgbotstest').new(limit=10):
+    for submission in r.subreddit('singapore').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -58,6 +61,9 @@ def run_bot(r, replied_articles_id,approvedlist):
                 article_title="ERROR"
                 articlereply=""
                 similarity_reply=""
+                parsed_article=""
+                keywords=""
+                keywords_string=""
 
                 if (submission.id in replied_articles_id):
                     print(submission.id + " is in replied database")
@@ -71,7 +77,8 @@ def run_bot(r, replied_articles_id,approvedlist):
                     article_error_flag = False
 
                     try:
-                        articlereply = get_summary(submission.url)
+                        parsed_article=parse_article(submission.url)
+                        articlereply = get_summary(parsed_article)
                     except:
                         article_error_flag = True
                         articlereply = "There was an error reading the article text. This may be due to a paywall."
@@ -87,35 +94,40 @@ def run_bot(r, replied_articles_id,approvedlist):
                     if(article_error_flag==False):
                 
                         replied_database = pd.read_csv("replied_articles.csv",index_col=[0])
-                        similar_database = check_similarity(article_title, replied_database)
+                        
+                        keywords = get_keywords(parsed_article)
+                        keywords_string = ' '.join(keywords)
+
+                        similar_database = check_keywords(keywords_string, replied_database)
+
+                        #similar_database = check_similarity(article_title, replied_database)
                         max_similarity_record = similar_database[similar_database.similarity_value == similar_database.similarity_value.max()]
 
                         #print(max_similarity_record)
 
+                        similarity_reply = "\n***\n" + "Article keywords: " + keywords_string + ". "
+
                         if (not(max_similarity_record.empty)):
-                            if (max_similarity_record.loc[0]["similarity_value"]>0.85):
-                                similarity_reply = "***\n\n" + "The article title is " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
+                            if (max_similarity_record.loc[0]["similarity_value"]>0.90):
+                                similarity_reply = similarity_reply + "\n\nThe keywords are " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
 
                         print("New entry for " + submission.id + " in Database at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-                        append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title]})
+                        append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title], "keywords": [keywords_string]})
                         replied_database = pd.concat([replied_database, append_to_database])
                         replied_database.to_csv('replied_articles.csv')
                     else:
+                        print("there was an article error")
                         #there was an article error
 
                     fullreply = "Title: " + article_title + " \n\n"
-                    fullreply = fullreply + articlereply + "\n\n" + similarity_reply + "\n***\n\n" + "[v1.2 - error checks](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy 58th Birthday Singapore! | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + "[v1.3 - added article keywords](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy Mid-Autumn Festival! | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
 
 
             else:
                 fullreply=""
-                #print("wrong submission type")
-
-    #print("Sleeping for 10 seconds")
-    #time.sleep(10)
 
 def check_top_level_comments(submission):
     bot_replied_flag = False
@@ -124,13 +136,10 @@ def check_top_level_comments(submission):
             bot_replied_flag = True
     return bot_replied_flag
 
-
-
-
 def get_replied_articles():
         
         if not os.path.isfile("replied_articles.csv"):
-                blank_database=pd.DataFrame(columns=['id','title'])
+                blank_database=pd.DataFrame(columns=['id','title', 'keywords'])
                 blank_database.to_csv("replied_articles.csv")
                 replied_articles_id = []
         else:
@@ -146,6 +155,21 @@ def get_approved_list():
         approved_list = list(filter(None, approved_list.split("\n")))
 
     return approved_list
+
+def parse_article(article_url):
+
+    article = Article(article_url)
+    article.download()
+
+    #Currently Broken
+    #if(html.find(class_='paid-premium st-flag-1') == 'For Subscribers'):
+    #    return("READ TEXT ERROR")
+    
+    article.parse()
+    
+    newstext = article.text
+
+    return newstext
 
 def get_htmltitle(article_url):
 
@@ -172,42 +196,51 @@ def get_htmltitle(article_url):
 
     return parsed_title
 
+def get_keywords(parsed_article):
+
+    word_frequencies = get_word_frequencies(parsed_article)
+    word_frequencies = {k.lower(): v for k, v in word_frequencies.items()}
+
+    keywords = sorted(word_frequencies, key=word_frequencies.get, reverse = True)[:20]
+
+    return keywords
+
+def check_keywords(keywords_string, replied_database):
+
+    temp_replied_keywords=nlp("iddqd idjfk")
+
+    similar_database = replied_database.copy().tail(min(len(replied_database.index),100))
+    similar_database["similarity_value"] = ""
+    replied_database_keywords = replied_database["keywords"].tolist()
+
+    temp_new_keywords = nlp(' '.join([str(t) for t in keywords_string.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+
+    for replied_keywords in replied_database_keywords:
+        temp_replied_keywords = nlp(' '.join([str(t) for t in replied_keywords.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+        
+        similarity_value = temp_new_keywords.similarity(temp_replied_keywords)
+        
+        similar_database["similarity_value"][similar_database.keywords == replied_keywords] = similarity_value
+
+    return similar_database
+
 def check_similarity(article_title, replied_database):
 
     similar_database = replied_database.copy().tail(min(len(replied_database.index),100))
-
     similar_database["similarity_value"] = ""
-
-    #temp_article_title = nlp(' '.join([str(t) for t in article_title if not t in list(STOP_WORDS)]))
+    replied_articles_titles = replied_database["title"].tolist()
 
     temp_article_title = nlp(' '.join([str(t) for t in article_title.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
-    
-    #print(temp_article_title)
-
-    replied_articles_titles = replied_database["title"].tolist()
     
     for replied_title in replied_articles_titles:
         temp_replied_title = nlp(' '.join([str(t) for t in replied_title.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
         
-        #print(temp_replied_title)
-
         similarity_value = temp_article_title.similarity(temp_replied_title)
         similar_database["similarity_value"][similar_database.title == replied_title] = similarity_value
 
     return similar_database
 
-def get_summary(article_url):
-
-    article = Article(article_url)
-    article.download()
-
-    #Currently Broken
-    #if(html.find(class_='paid-premium st-flag-1') == 'For Subscribers'):
-    #    return("READ TEXT ERROR")
-    
-    article.parse()
-    
-    newstext = article.text
+def get_summary(newstext):
 
     #print(newstext)
 
@@ -230,17 +263,8 @@ def get_summary(article_url):
 
 def summarize_text(text, per):
 
-    doc= nlp(text)
-    tokens=[token.text for token in doc]
-    word_frequencies={}
+    word_frequencies = get_word_frequencies(text)
     
-    for word in doc:
-        if word.text.lower() not in list(STOP_WORDS):
-            if word.text.lower() not in punctuation:
-                if word.text not in word_frequencies.keys():
-                    word_frequencies[word.text] = 1
-                else:
-                    word_frequencies[word.text] += 1
     max_frequency=max(word_frequencies.values())
     
     for word in word_frequencies.keys():
@@ -264,6 +288,23 @@ def summarize_text(text, per):
 
     return summary
 
+def get_word_frequencies(text):
+    
+    doc= nlp(text)
+    word_frequencies={}
+    
+    for word in doc:
+        if word.text.lower() not in list(STOP_WORDS):
+            if word.text.lower() not in punctuation:
+                if word.text.lower().isalpha():
+                    if word.text not in word_frequencies.keys():
+                        word_frequencies[word.text] = 1
+                    else:
+                        word_frequencies[word.text] += 1
+    return word_frequencies
+
+
+
 # Main
 
 r = bot_login()
@@ -273,7 +314,7 @@ r = bot_login()
 while True:
    try:
        run_bot(r, get_replied_articles(),get_approved_list())
-       time.sleep(10)
+       time.sleep(60)
    except Exception as err:
        print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(err))
        time.sleep(36000)

@@ -40,14 +40,14 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.3")
+                        user_agent = "Sneakpeakbot v1.3b")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('singapore').new(limit=10):
+    for submission in r.subreddit('sgbotstest').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -98,9 +98,9 @@ def run_bot(r, replied_articles_id,approvedlist):
                         keywords = get_keywords(parsed_article)
                         keywords_string = ' '.join(keywords)
 
-                        similar_database = check_keywords(keywords_string, replied_database)
+                        #similar_database = check_keywords(keywords_string, replied_database)
 
-                        #similar_database = check_similarity(article_title, replied_database)
+                        similar_database = check_similarity(article_title, replied_database)
                         max_similarity_record = similar_database[similar_database.similarity_value == similar_database.similarity_value.max()]
 
                         #print(max_similarity_record)
@@ -121,7 +121,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #there was an article error
 
                     fullreply = "Title: " + article_title + " \n\n"
-                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + "[v1.3 - added article keywords](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy Mid-Autumn Festival! | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + "[v1.3b - Revert similarity matching](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy Mid-Autumn Festival! | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
 

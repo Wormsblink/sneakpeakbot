@@ -40,14 +40,14 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.3b")
+                        user_agent = "Sneakpeakbot v1.3c")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('sgbotstest').new(limit=10):
+    for submission in r.subreddit('singapore').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -66,7 +66,8 @@ def run_bot(r, replied_articles_id,approvedlist):
                 keywords_string=""
 
                 if (submission.id in replied_articles_id):
-                    print(submission.id + " is in replied database")
+                    pass
+                    #print(submission.id + " is in replied database")
                     #stop immediately
 
                 elif (check_top_level_comments(submission)==True):
@@ -121,7 +122,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #there was an article error
 
                     fullreply = "Title: " + article_title + " \n\n"
-                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + "[v1.3b - Revert similarity matching](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy Mid-Autumn Festival! | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + "[v1.3c - disable debug terminal spam](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Spooky Halloween! | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
 
@@ -317,4 +318,4 @@ while True:
        time.sleep(60)
    except Exception as err:
        print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(err))
-       time.sleep(36000)
+       time.sleep(3000)

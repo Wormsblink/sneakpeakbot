@@ -119,7 +119,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #there was an article error
 
                     fullreply = "Title: " + article_title + " \n\n"
-                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + nReplies " articles replied in my database. " "[v1.4 - stopwrods to refine similarity](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Peace to the world | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + nReplies + " articles replied in my database. " + "[v1.4 - stopwrods to refine similarity](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Peace to the world | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
 

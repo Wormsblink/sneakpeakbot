@@ -20,8 +20,6 @@ from bs4 import BeautifulSoup
 import spacy
 nlp = spacy.load('en_core_web_sm')
 
-nlp.Defaults.stop_words |= {"singapore", "singaporean", "sg", "mr", "mrs", "monday", "tuesday","wednesday","thursday","friday","saturday","sunday", "day", "days", "month", "months", "year", "years", "said", "wrote", "spoke", "written","contains","including","person", "man"}
-
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
 
@@ -40,14 +38,14 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.3c")
+                        user_agent = "Sneakpeakbot v1.4")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('singapore').new(limit=10):
+    for submission in r.subreddit('sgbotstest').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -68,11 +66,9 @@ def run_bot(r, replied_articles_id,approvedlist):
                 if (submission.id in replied_articles_id):
                     pass
                     #print(submission.id + " is in replied database")
-                    #stop immediately
 
                 elif (check_top_level_comments(submission)==True):
                     print("bot comment detected in top level comments for " + submission.id)
-                    #stop immediately
 
                 else:
                     article_error_flag = False
@@ -95,7 +91,8 @@ def run_bot(r, replied_articles_id,approvedlist):
                     if(article_error_flag==False):
                 
                         replied_database = pd.read_csv("replied_articles.csv",index_col=[0])
-                        
+                        nReplies = len(replied_database)
+
                         keywords = get_keywords(parsed_article)
                         keywords_string = ' '.join(keywords)
 
@@ -122,10 +119,9 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #there was an article error
 
                     fullreply = "Title: " + article_title + " \n\n"
-                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + "[v1.3c - disable debug terminal spam](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Spooky Halloween! | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + nReplies " articles replied in my database. " "[v1.4 - stopwrods to refine similarity](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Peace to the world | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
-
 
             else:
                 fullreply=""
@@ -200,9 +196,13 @@ def get_htmltitle(article_url):
 def get_keywords(parsed_article):
 
     word_frequencies = get_word_frequencies(parsed_article)
+
+    print(type(word_frequencies))
+    print(word_frequencies)
+
     word_frequencies = {k.lower(): v for k, v in word_frequencies.items()}
 
-    keywords = sorted(word_frequencies, key=word_frequencies.get, reverse = True)[:20]
+    keywords = sorted(word_frequencies, key=word_frequencies.get, reverse = True)[:10]
 
     return keywords
 
@@ -304,11 +304,22 @@ def get_word_frequencies(text):
                         word_frequencies[word.text] += 1
     return word_frequencies
 
+def get_stop_words():
 
+    with open("stop_words_list.txt", "r") as f:
+        stop_words_list = f.read()
+        stop_words_list = list(filter(None, stop_words_list.split("\n")))
+
+    return stop_words_list
 
 # Main
 
 r = bot_login()
+
+stop_words_list = get_stop_words()
+
+for word in stop_words_list:
+    nlp.Defaults.stop_words.add(word)
 
 #run_bot(r, get_replied_articles(),get_approved_list())
 
@@ -318,4 +329,4 @@ while True:
        time.sleep(60)
    except Exception as err:
        print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(err))
-       time.sleep(3000)
+       time.sleep(36000)

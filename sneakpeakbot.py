@@ -1,15 +1,18 @@
 #Python 3
-#first from termimal - pip install spacy, newspaper3k, praw, bs4, pandas
+#first from termimal - pip install spacy, newspaper3k, praw, bs4, pandas, spacy-universal-sentence-encoder
 #then spacy download en_core_web_sm (in terminal)
 
 import config
-import praw
+
 import pandas as pd
+
+import praw
 import time
 from datetime import datetime
 import os
 import re
 import warnings
+import traceback
 
 from heapq import nlargest
 
@@ -18,7 +21,9 @@ from urllib import request
 from bs4 import BeautifulSoup
 
 import spacy
+import spacy_universal_sentence_encoder
 nlp = spacy.load('en_core_web_sm')
+nlp2 = spacy_universal_sentence_encoder.load_model('en_use_lg')
 
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
@@ -45,7 +50,7 @@ def bot_login():
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit('sgbotstest').new(limit=10):
+    for submission in r.subreddit('singapore').new(limit=10):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -96,18 +101,21 @@ def run_bot(r, replied_articles_id,approvedlist):
                         keywords = get_keywords(parsed_article)
                         keywords_string = ' '.join(keywords)
 
-                        #similar_database = check_keywords(keywords_string, replied_database)
+                        similar_database = check_keywords(keywords_string, replied_database)
 
-                        similar_database = check_similarity(article_title, replied_database)
+                        #print(similar_database)
+
+                        #similar_database = check_similarity(article_title, replied_database)
                         max_similarity_record = similar_database[similar_database.similarity_value == similar_database.similarity_value.max()]
 
-                        #print(max_similarity_record)
-
-                        similarity_reply = "\n***\n" + "Article keywords: " + keywords_string + ". "
+                        similarity_reply = "\n***\n" + "Article keywords: " + keywords_string
 
                         if (not(max_similarity_record.empty)):
-                            if (max_similarity_record.loc[0]["similarity_value"]>0.90):
-                                similarity_reply = similarity_reply + "\n\nThe keywords are " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
+                            try:
+                                if (max_similarity_record.loc[0]["similarity_value"]>0.50):
+                                    similarity_reply = similarity_reply + "\n\nThe keywords are " + str(round(max_similarity_record.loc[0]["similarity_value"]*100)) + "% similar to: [" + max_similarity_record.loc[0]["title"] + "](https://www.reddit.com/r/singapore/comments/" + max_similarity_record.loc[0]["id"] + ")"
+                            except:
+                                pass
 
                         print("New entry for " + submission.id + " in Database at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
@@ -119,7 +127,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #there was an article error
 
                     fullreply = "Title: " + article_title + " \n\n"
-                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + nReplies + " articles replied in my database. " + "[v1.4 - stopwrods to refine similarity](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Peace to the world | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n\n" + str(nReplies) + " articles replied in my database. " + "[v1.5 - added Lemma tokens and Tensorflow USE](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy Holidays! | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
 
@@ -197,27 +205,24 @@ def get_keywords(parsed_article):
 
     word_frequencies = get_word_frequencies(parsed_article)
 
-    print(type(word_frequencies))
-    print(word_frequencies)
-
     word_frequencies = {k.lower(): v for k, v in word_frequencies.items()}
 
-    keywords = sorted(word_frequencies, key=word_frequencies.get, reverse = True)[:10]
+    keywords = sorted(word_frequencies, key=word_frequencies.get, reverse = True)[:8]
 
     return keywords
 
 def check_keywords(keywords_string, replied_database):
 
-    temp_replied_keywords=nlp("iddqd idjfk")
+    #Similarity by keywords
 
     similar_database = replied_database.copy().tail(min(len(replied_database.index),100))
     similar_database["similarity_value"] = ""
     replied_database_keywords = replied_database["keywords"].tolist()
 
-    temp_new_keywords = nlp(' '.join([str(t) for t in keywords_string.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+    temp_new_keywords = nlp2(' '.join([str(t) for t in keywords_string.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
 
     for replied_keywords in replied_database_keywords:
-        temp_replied_keywords = nlp(' '.join([str(t) for t in replied_keywords.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+        temp_replied_keywords = nlp2(' '.join([str(t) for t in replied_keywords.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
         
         similarity_value = temp_new_keywords.similarity(temp_replied_keywords)
         
@@ -226,6 +231,8 @@ def check_keywords(keywords_string, replied_database):
     return similar_database
 
 def check_similarity(article_title, replied_database):
+
+    #Similarity by title
 
     similar_database = replied_database.copy().tail(min(len(replied_database.index),100))
     similar_database["similarity_value"] = ""
@@ -275,11 +282,11 @@ def summarize_text(text, per):
     
     for sent in sentence_tokens:
         for word in sent:
-            if word.text.lower() in word_frequencies.keys():
+            if word.lemma_ in word_frequencies.keys():
                 if sent not in sentence_scores.keys():                            
-                    sentence_scores[sent]=word_frequencies[word.text.lower()]
+                    sentence_scores[sent]=word_frequencies[word.lemma_]
                 else:
-                    sentence_scores[sent]+=word_frequencies[word.text.lower()]
+                    sentence_scores[sent]+=word_frequencies[word.lemma_]
     
     select_length=int(len(sentence_tokens)*per)
     summary=nlargest(select_length, sentence_scores,key=sentence_scores.get)
@@ -295,13 +302,14 @@ def get_word_frequencies(text):
     word_frequencies={}
     
     for word in doc:
-        if word.text.lower() not in list(STOP_WORDS):
+        if word.text.lower().isalpha():
             if word.text.lower() not in punctuation:
-                if word.text.lower().isalpha():
-                    if word.text not in word_frequencies.keys():
-                        word_frequencies[word.text] = 1
-                    else:
-                        word_frequencies[word.text] += 1
+                if len(word.text)>1:
+                    if word.lemma_ not in list(STOP_WORDS):
+                        if word.lemma_ not in word_frequencies.keys():
+                            word_frequencies[word.lemma_] = 1
+                        else:
+                            word_frequencies[word.lemma_] += 1
     return word_frequencies
 
 def get_stop_words():
@@ -328,5 +336,6 @@ while True:
        run_bot(r, get_replied_articles(),get_approved_list())
        time.sleep(60)
    except Exception as err:
+       print(traceback.format_exc())
        print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(err))
        time.sleep(36000)

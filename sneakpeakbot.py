@@ -43,7 +43,7 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.4")
+                        user_agent = "Sneakpeakbot v1.5c")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
@@ -127,8 +127,9 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #there was an article error
 
                     fullreply = "Title: " + article_title + " \n\n"
-                    fullreply = fullreply + articlereply + similarity_reply + "\n\n" + str(nReplies) + " articles replied in my database. " + "[v1.5 - added Lemma tokens and Tensorflow USE](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy Holidays! | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n\n" + str(nReplies) + " articles replied in my database. " + "[v1.5c - added Lemma tokens and Tensorflow USE](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy Holidays! | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
+                    #print(fullreply)
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
 
             else:
@@ -153,6 +154,20 @@ def get_replied_articles():
                 #replied_articles_id = replied_articles_id.split("\n")
 
         return replied_articles_id
+
+def get_error_log():
+        
+        if not os.path.isfile("error_log.csv"):
+                blank_database=pd.DataFrame(columns=['id','URL'])
+                blank_database.to_csv("error_log.csv")
+                error_database = []
+        else:
+                error_database = pd.read_csv("error_log.csv")
+                error_database_id = error_database['id'].tolist()
+                #replied_articles_id = replied_articles_id.split("\n")
+
+        return error_database_id
+
 
 def get_approved_list():
     with open("approved_sites_list.txt", "r") as f:
@@ -215,6 +230,9 @@ def check_keywords(keywords_string, replied_database):
 
     #Similarity by keywords
 
+    if(type(keywords_string) is float):
+        keywords_string = str(keywords_string)
+
     similar_database = replied_database.copy().tail(min(len(replied_database.index),100))
     similar_database["similarity_value"] = ""
     replied_database_keywords = replied_database["keywords"].tolist()
@@ -253,7 +271,14 @@ def get_summary(newstext):
     #print(newstext)
 
     if not newstext:
-        return("READ TEXT ERROR")
+        
+        error_database = get_error_log()
+
+        append_to_database = pd.DataFrame({"id": [submission.id], "URL": [submission.url]})
+                        error_database = pd.concat([error_database, append_to_database])
+                        error_database.to_csv('error_log.csv')
+
+        return("Article parsing Failed. This may be edue to non-standard HTML elements in the article. This event has been logged into error database.")
     else:
 
         summarized_article = newstext

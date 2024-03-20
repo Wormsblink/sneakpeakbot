@@ -13,6 +13,11 @@ import os
 import re
 import warnings
 import traceback
+import logging
+
+logging.disable(logging.WARNING)
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+#warnings.filterwarnings("ignore",message=r"\[W007\]",category=UserWarning)
 
 from heapq import nlargest
 
@@ -28,7 +33,7 @@ nlp2 = spacy_universal_sentence_encoder.load_model('en_use_lg')
 from spacy.lang.en.stop_words import STOP_WORDS
 from string import punctuation
 
-warnings.filterwarnings("ignore",message=r"\[W007\]",category=UserWarning)
+
 
         # spacy en_core_web_sm
         # most efficient
@@ -43,7 +48,7 @@ def bot_login():
                         password = config.password,
                         client_id = config.client_id,
                         client_secret = config.client_secret,
-                        user_agent = "Sneakpeakbot v1.5c")
+                        user_agent = "Sneakpeakbot v1.5d")
         print("Log in successful!")
         print(datetime.now().strftime('%d %b %y %H:%M:%S'))
         return r
@@ -127,7 +132,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #there was an article error
 
                     fullreply = "Title: " + article_title + " \n\n"
-                    fullreply = fullreply + articlereply + similarity_reply + "\n\n" + str(nReplies) + " articles replied in my database. " + "[v1.5c - added Lemma tokens and Tensorflow USE](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | Happy Holidays! | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n\n" + str(nReplies) + " articles replied in my database. " + "[v1.5d (21 Mar 24) - reduce timeout for locked submissions](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
                     submission.reply(fullreply)
                     #print(fullreply)
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
@@ -275,8 +280,8 @@ def get_summary(newstext):
         error_database = get_error_log()
 
         append_to_database = pd.DataFrame({"id": [submission.id], "URL": [submission.url]})
-                        error_database = pd.concat([error_database, append_to_database])
-                        error_database.to_csv('error_log.csv')
+        error_database = pd.concat([error_database, append_to_database])
+        error_database.to_csv('error_log.csv')
 
         return("Article parsing Failed. This may be edue to non-standard HTML elements in the article. This event has been logged into error database.")
     else:
@@ -363,4 +368,4 @@ while True:
    except Exception as err:
        print(traceback.format_exc())
        print("Fatal error at " + datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ", " + str(err))
-       time.sleep(36000)
+       time.sleep(3600)

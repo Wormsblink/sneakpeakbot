@@ -28,6 +28,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                 keywords_reply = ""
                 nReplies = 0
                 article_sentiment = 0
+                sentiment_reply = ""
 
                 try:
                     replied_database = pd.read_csv(config.repliedlist,index_col=[0])
@@ -58,7 +59,7 @@ def run_bot(r, replied_articles_id,approvedlist):
 
                         article_sentiment = round(nlpv2.get_sentiment(parsed_article),2)
 
-                        sentiment_reply = "The mood of this article is: " + nlpv2.classify_sentiment(article_sentiment) + "(sentiment value of " + str(article_sentiment) + ")\n\n"
+                        sentiment_reply = "The mood of this article is: " + nlpv2.classify_sentiment(article_sentiment) + " (sentiment value of " + str(article_sentiment) + ")\n\n"
 
                         similar_database = nlpv2.check_keywords(keywords_string, replied_database)
 

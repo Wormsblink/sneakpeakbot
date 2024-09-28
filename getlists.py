@@ -19,7 +19,7 @@ def approved_list(filepath):
 def replied_articles(filepath):
         
         if not os.path.isfile(filepath):
-                blank_database=pd.DataFrame(columns=['id','title', 'keywords'])
+                blank_database=pd.DataFrame(columns=['id','title', 'keywords','sentiment'])
                 blank_database.to_csv(filepath)
                 replied_articles_id = []
         else:

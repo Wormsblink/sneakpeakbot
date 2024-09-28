@@ -89,12 +89,16 @@ def run_bot(r, replied_articles_id,approvedlist):
                     fullreply = "Title: " + article_title + " \n\n"
                     fullreply = fullreply + keywords_reply + sentiment_reply
                     fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + str(nReplies) + " articles replied in my database. " + "[v1.6.0 (28 Sep 24) - added sentimental analysis](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
-                    submission.reply(fullreply)
-                    #print(fullreply)
+                    
+                    if (config.replymode == True):
+                        submission.reply(fullreply)
+                    else:
+                        print(fullreply)
+
                     print("Replied to submission " + submission.id + " by " + submission.author.name)
 
             else:
-                fullreply=""
+                pass
 
 def check_top_level_comments(submission):
     bot_replied_flag = False

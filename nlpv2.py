@@ -194,7 +194,7 @@ def classify_sentiment(score):
     elif(0.20 <= score < 0.25):
         return "Miraculous"
     elif(0.25 <= score < 0.30):
-        return: "Estatic"
+        return "Estatic"
     elif(0.30 <= score < 0.10):
         return "Glory to Singapore"
     else:

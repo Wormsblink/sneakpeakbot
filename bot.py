@@ -57,7 +57,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         keywords = nlpv2.get_keywords(parsed_article)
                         keywords_string = ', '.join(keywords)
 
-                        article_sentiment = round(nlpv2.get_sentiment(parsed_article),2)
+                        article_sentiment = round(nlpv2.get_sentiment(article_title),2)
 
                         sentiment_reply = "The mood of this article is: " + nlpv2.classify_sentiment(article_sentiment) + " (sentiment value of " + str(article_sentiment) + ")\n\n"
 

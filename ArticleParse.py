@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 def get_title(article_url):
 
     requested_site = request.Request(article_url, headers={"User-Agent": "Mozilla/5.0"})
-    html = request.urlopen(requested_site).read().decode('utf8')
+    html = request.urlopen(requested_site).read().decode('utf8','ignore')
     html[:60]
 
     soup = BeautifulSoup(html, 'html.parser')

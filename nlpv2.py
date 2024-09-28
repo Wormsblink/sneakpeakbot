@@ -14,10 +14,11 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import pandas as pd
 import spacy
 import spacy_universal_sentence_encoder
-from spacytextblob.spacytextblob import SpacyTextBlob
-
 nlp = spacy.load('en_core_web_sm')
-nlp.add_pipe('spacytextblob')
+
+import asent
+nlp.add_pipe('asent_en_v1')
+
 
 nlp2 = spacy_universal_sentence_encoder.load_model('en_use_lg')
 
@@ -172,30 +173,32 @@ def get_summary(newstext):
 
     return cleaned_article
 
-def get_sentiment(newstext):
-    doc = nlp(newstext)
-    return doc._.blob.polarity
+def get_sentiment(analysistext):
+    doc = nlp(analysistext)
+    return doc._.polarity.compound
 
 def classify_sentiment(score):
-    if (-1.0 <= score < -0.30):
+    if (-1.00 <= score < -0.50):
         return "Fall of Singapore"
-    elif(-0.30 <= score < -0.25):
+    elif(-0.50 <= score < -0.40):
+        return "Calamity"
+    elif(-0.40 <= score < -0.30):
         return "Disastrous"
-    elif(-0.25 <= score < -0.20):
+    elif(-0.30 <= score < -0.20):
         return "Terrible"
-    elif(-0.20 <= score < -0.15):
+    elif(-0.20 <= score < -0.10):
         return "Bad"
-    elif(-0.15 <= score < 0.10):
+    elif(-0.10 <= score < 0.10):
         return "Neutral"
-    elif(-0.10 <= score < 0.15):
+    elif(0.10 <= score < 0.20):
         return "Good"
-    elif(0.15 <= score < 0.20):
+    elif(0.20 <= score < 0.30):
         return "Fantastic"
-    elif(0.20 <= score < 0.25):
+    elif(0.30 <= score < 0.40):
         return "Miraculous"
-    elif(0.25 <= score < 0.30):
+    elif(0.40 <= score < 0.50):
         return "Estatic"
-    elif(0.30 <= score < 0.10):
+    elif(0.50 <= score < 1.00):
         return "Glory to Singapore"
     else:
         return "N/A"

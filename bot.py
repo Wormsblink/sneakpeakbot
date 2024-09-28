@@ -8,7 +8,7 @@ import config
 
 def run_bot(r, replied_articles_id,approvedlist):
 
-    for submission in r.subreddit(config.subreddit).new(limit=10):
+    for submission in r.subreddit(config.subreddit).new(limit=config.submissionlimit):
 
     #Disabled bot call comment
     #for comment in r.subreddit('singapore').comments(limit = 20):
@@ -57,7 +57,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         keywords = nlpv2.get_keywords(parsed_article)
                         keywords_string = ', '.join(keywords)
 
-                        article_sentiment = round(nlpv2.get_sentiment(article_title),2)
+                        article_sentiment = round(nlpv2.get_sentiment(articlereply),2)
 
                         sentiment_reply = "The mood of this article is: " + nlpv2.classify_sentiment(article_sentiment) + " (sentiment value of " + str(article_sentiment) + ")\n\n"
 
@@ -68,7 +68,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                         #similar_database = check_similarity(article_title, replied_database)
                         max_similarity_record = similar_database[similar_database.similarity_value == similar_database.similarity_value.max()]
 
-                        keywords_reply = "\n\n" + "Article keywords: " + keywords_string + "\n\n"
+                        keywords_reply = "Article keywords: " + keywords_string + "\n\n"
 
                         if (not(max_similarity_record.empty)):
                             try:

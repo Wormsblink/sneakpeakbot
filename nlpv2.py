@@ -177,5 +177,23 @@ def get_sentiment(newstext):
     return doc._.blob.polarity
 
 def classify_sentiment(score):
-
-
+    if (-1.0 <= score < -0.8):
+        return "Fall of Singapore"
+    elif(-0.8 <= score < -0.6):
+        return "Disastrous"
+    elif(-0.6 <= score < -0.4):
+        return "Terrible"
+    elif(-0.4 <= score < -0.2):
+        return "Bad"
+    elif(-0.2 <= score < 0.2):
+        return "Neutral"
+    elif(0.2 <= score < 0.4):
+        return "Good"
+    elif(0.4 <= score < 0.6):
+        return "Fantastic"
+    elif(0.6 <= score < 0.8):
+        return "Miraculous"
+    elif(0.8 <= score < 1.0):
+        return "Glory to Singapore"
+    else:
+        return "N/A"

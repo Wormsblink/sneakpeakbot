@@ -24,7 +24,7 @@ def run_bot(r, replied_articles_id,approvedlist):
                 similarity_reply = ""
                 parsed_article = ""
                 keywords = ""
-                keywords_strin g =""
+                keywords_string =""
                 keywords_reply = ""
                 nReplies = 0
                 article_sentiment = 0

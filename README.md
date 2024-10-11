@@ -7,4 +7,5 @@
   also download en_use_lg model for spacy (pip install https://github.com/MartinoMensio/spacy-universal-sentence-encoder/releases/download/v0.4.6/en_use_lg-0.4.6.tar.gz#en_use_lg-0.4.6)
 
 2. Package conflcits
-  numpy version 2.0.0 or greater is incompatible with spacy. Downgrade to version 1.26.4
+   
+  numpy version 2.0.0 or greater is incompatible with spacy. Downgrade to version 1.26.4 until thinc is fixed

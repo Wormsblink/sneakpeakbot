@@ -88,7 +88,7 @@ def run_bot(r, replied_articles_id,approvedlist):
 
                     fullreply = "Title: " + article_title + " \n\n"
                     fullreply = fullreply + keywords_reply + sentiment_reply
-                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + str(nReplies) + " articles replied in my database. " + "[v1.6.0 (28 Sep 24) - added sentimental analysis](" + "https://github.com/Wormsblink/sneakpeakbot" + ") | PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + str(nReplies) + " articles replied in my database. [v" + config.version + "](https://github.com/Wormsblink/sneakpeakbot) " + "| PM SG_wormsbot if bot is down."
                     
                     if (config.replymode == True):
                         submission.reply(fullreply)

@@ -19,6 +19,10 @@ nlp = spacy.load('en_core_web_sm')
 import asent
 nlp.add_pipe('asent_en_v1')
 
+from pyate.term_extraction_pipeline import TermExtractionPipeline
+nlp.add_pipe("combo_basic")
+
+nKeywords = config.nKeywords
 
 nlp2 = spacy_universal_sentence_encoder.load_model('en_use_lg')
 
@@ -45,6 +49,14 @@ def get_word_frequencies(text):
                             word_frequencies[word.lemma_] += 1
     return word_frequencies
 
+def get_keywords(parsed_article):
+    doc = nlp(parsed_article)
+    keywords_series = doc._.combo_basic.sort_values(ascending=False)[:nKeywords]
+
+    keywords = keywords_series.index.values.tolist()
+
+    return keywords
+
 def get_keywords_by_frequency(parsed_article):
 
     #not in use
@@ -57,7 +69,9 @@ def get_keywords_by_frequency(parsed_article):
 
     return keywords
 
-def get_keywords(parsed_article):
+def get_keywords_OLD(parsed_article):
+
+    #this function is deprecated
 
     doc = nlp(parsed_article)
     keywords = {}
@@ -178,27 +192,27 @@ def get_sentiment(analysistext):
     return doc._.polarity.compound
 
 def classify_sentiment(score):
-    if (-1.00 <= score < -0.50):
+    if (-1.00 <= score < -0.75):
         return "Fall of Singapore"
-    elif(-0.50 <= score < -0.40):
+    elif(-0.75 <= score < -0.65):
         return "Calamity"
-    elif(-0.40 <= score < -0.30):
+    elif(-0.65 <= score < -0.50):
         return "Disastrous"
-    elif(-0.30 <= score < -0.20):
+    elif(-0.50 <= score < -0.30):
         return "Terrible"
-    elif(-0.20 <= score < -0.10):
+    elif(-0.30 <= score < -0.20):
         return "Bad"
-    elif(-0.10 <= score < 0.10):
+    elif(-0.20 <= score < 0.20):
         return "Neutral"
-    elif(0.10 <= score < 0.20):
-        return "Good"
     elif(0.20 <= score < 0.30):
+        return "Good"
+    elif(0.30 <= score < 0.50):
         return "Fantastic"
-    elif(0.30 <= score < 0.40):
+    elif(0.50 <= score < 0.65):
         return "Miraculous"
-    elif(0.40 <= score < 0.50):
+    elif(0.65 <= score < 0.75):
         return "Estatic"
-    elif(0.50 <= score < 1.00):
+    elif(0.75 <= score < 1.00):
         return "Glory to Singapore"
     else:
         return "N/A"

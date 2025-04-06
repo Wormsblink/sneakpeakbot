@@ -19,12 +19,12 @@ def run_bot(r, replied_articles_id,approvedlist):
             if ((submission.selftext=="" and submission.url.startswith(tuple(approvedlist))) and not submission.url.startswith("https://www.reddit.com")):
 
                 fullreply = ""
-                article_title = "ERROR"
+                article_title = "Title Error"
                 articlereply = ""
                 similarity_reply = ""
                 parsed_article = ""
                 keywords = ""
-                keywords_string =""
+                keywords_string ="Keywords Error"
                 keywords_reply = ""
                 nReplies = 0
                 article_sentiment = 0
@@ -58,8 +58,9 @@ def run_bot(r, replied_articles_id,approvedlist):
                         keywords_string = ', '.join(keywords)
 
                         article_sentiment = round(nlpv2.get_sentiment(articlereply),2)
+                        title_sentiment = round(nlpv2.get_sentiment(article_title),2)
 
-                        sentiment_reply = "The mood of this article is: " + nlpv2.classify_sentiment(article_sentiment) + " (sentiment value of " + str(article_sentiment) + ")\n\n"
+                        sentiment_reply = "Title mood: " + nlpv2.classify_sentiment(title_sentiment) + " (sentiment value " + str(title_sentiment) + "). \n\n" "Article mood: " + nlpv2.classify_sentiment(article_sentiment) + " (sentiment value " + str(article_sentiment) + ")\n\n"
 
                         similar_database = nlpv2.check_keywords(keywords_string, replied_database)
 
@@ -83,12 +84,15 @@ def run_bot(r, replied_articles_id,approvedlist):
                         replied_database = pd.concat([replied_database, append_to_database])
                         replied_database.to_csv(config.repliedlist)
                     else:
-                        articlereply = "There was an error reading the article text. This may be due to a paywall."
-                        print("Article summary error flag triggered on " + submission.id)
+                        articlereply = "There was an error reading the article text. This may be due to paywall / anti ad-blocker."
+                        error_database = pd.read_csv(config.errorlist,index_col=[0])
+                        append_to_database = pd.DataFrame({"id": [submission.id], "title": [article_title], "keywords": [keywords_string], "resolved": ["No"]})
+                        error_database = pd.concat([error_database, append_to_database])
+                        error_database.to_csv(config.errorlist)
 
-                    fullreply = "Title: " + article_title + " \n\n"
+                    fullreply ="Title: " + article_title + " \n\n"
                     fullreply = fullreply + keywords_reply + sentiment_reply
-                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + str(nReplies) + " articles replied in my database. [v" + config.version + "](https://github.com/Wormsblink/sneakpeakbot) " + "| PM SG_wormsbot if bot is down."
+                    fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + "Article id " + submission.id + " | " + str(nReplies) + " articles replied in my database. [v" + config.version + "](https://github.com/Wormsblink/sneakpeakbot) " + "| PM SG_wormsbot if bot is down."
                     
                     if (config.replymode == True):
                         submission.reply(fullreply)

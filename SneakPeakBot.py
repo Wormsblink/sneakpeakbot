@@ -11,8 +11,10 @@ import config
 
 r = login.bot_login()
 
+
 while True:
    try:
+       getlists.error_articles(config.errorlist)
        bot.run_bot(r, getlists.replied_articles(config.repliedlist),getlists.approved_list(config.approvelist))
        time.sleep(60)
    except Exception as err:

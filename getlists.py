@@ -25,9 +25,20 @@ def replied_articles(filepath):
         else:
                 replied_database = pd.read_csv(filepath)
                 replied_articles_id = replied_database['id'].tolist()
-                #replied_articles_id = replied_articles_id.split("\n")
 
         return replied_articles_id
+
+def error_articles(filepath):
+
+        if not os.path.isfile(filepath):
+                blank_database=pd.DataFrame(columns=['id','title', 'keywords', 'resolved'])
+                blank_database.to_csv(filepath)
+                error_articles_id = []
+        else:
+                error_database = pd.read_csv(filepath)
+                error_articles_id = error_database['id'].tolist()
+
+        return error_articles_id 
     
 def error_log(filepath):
         

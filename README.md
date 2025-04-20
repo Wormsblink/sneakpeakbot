@@ -1,6 +1,6 @@
 1. Setup
 
-  From termimal - pip install spacy, newspaper3k, praw, bs4, pandas, spacy-universal-sentence-encoder, asent, pyate
+  From termimal - pip install spacy, newspaper3k, praw, bs4, pandas, spacy-universal-sentence-encoder, asent, pyate, xml_html_clean
 
   then run - spacy download en_core_web_sm
 

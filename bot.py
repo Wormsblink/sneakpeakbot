@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 
-import ArticleParse
+import ArticleParsev2
 import nlpv2
 import config
 
@@ -46,8 +46,8 @@ def run_bot(r, replied_articles_id,approvedlist):
                     article_error_flag = False
 
                     try:
-                        article_title = ArticleParse.get_title(submission.url)
-                        parsed_article=ArticleParse.parse_text(submission.url)
+                        article_title = ArticleParsev2.get_title(submission.url)
+                        parsed_article=ArticleParsev2.parse_text(submission.url)
                         articlereply = nlpv2.get_summary(parsed_article)
                     except:
                         article_error_flag = True

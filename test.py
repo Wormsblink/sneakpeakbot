@@ -1,4 +1,4 @@
-import ArticleParse
+import ArticleParsev2
 import spacy
 import asent
 import login
@@ -9,13 +9,13 @@ r = login.bot_login()
 
 def test_article_text(commentID):
         ArticleURL = r.submission(id=commentID).url.split('?')[0]
-        ArticleText = ArticleParse.parse_text(ArticleURL)
+        ArticleText = ArticleParsev2.parse_text(ArticleURL)
 
         return ArticleText
 
 def test_keywords(commentID):
         ArticleURL = r.submission(id=commentID).url.split('?')[0]
-        ArticleText = ArticleParse.parse_text(ArticleURL)
+        ArticleText = ArticleParsev2.parse_text(ArticleURL)
 
         keywords = nlpv2.get_keywords(ArticleText)
 
@@ -23,7 +23,7 @@ def test_keywords(commentID):
 
 def test_article_sentiment(commentID):
         ArticleURL = r.submission(id=commentID).url.split('?')[0]
-        ArticleText = ArticleParse.parse_text(ArticleURL)
+        ArticleText = ArticleParsev2.parse_text(ArticleURL)
         
         nlp = spacy.load('en_core_web_sm')
         nlp.add_pipe("asent_en_v1")
@@ -32,11 +32,11 @@ def test_article_sentiment(commentID):
 
         print(doc._.polarity.compound)
 
-        return  visual
+        return visual
 
 def test_title_sentiment(commentID):
         ArticleURL = r.submission(id=commentID).url.split('?')[0]
-        ArticleTitle = ArticleParse.get_title(ArticleURL)
+        ArticleTitle = ArticleParsev2.get_title(ArticleURL)
         
         nlp = spacy.load('en_core_web_sm')
         nlp.add_pipe("asent_en_v1")
@@ -49,7 +49,7 @@ def test_title_sentiment(commentID):
 
 def test_nlp(commentID):
         ArticleURL = r.submission(id=commentID).url.split('?')[0]
-        ArticleText = ArticleParse.parse_text(ArticleURL)
+        ArticleText = ArticleParsev2.parse_text(ArticleURL)
         nlp = spacy.load('en_core_web_sm')
         nlp.add_pipe('asent_en_v1')
         nlp.add_pipe("combo_basic")
@@ -59,10 +59,10 @@ def test_nlp(commentID):
 
 # Testing Below
 
-commentID = "1jssu43"
+commentID = "1ldcozj"
 
-#TestReply = test_article_text(commentID)
-TestReply = test_keywords(commentID)
+TestReply = test_article_text(commentID)
+#TestReply = test_keywords(commentID)
 #TestReply = test_article_sentiment(commentID)
 #TestReply = test_title_sentiment(commentID)
 #TestReply = test_nlp(commentID)

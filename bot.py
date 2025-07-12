@@ -54,7 +54,7 @@ def run_bot(r, replied_articles_id,approvedlist):
 
                     if(article_error_flag==False):
                 
-                        keywords = nlpv2.get_keywords(parsed_article)
+                        keywords = nlpv2.get_keywords(articlereply)
                         keywords_string = ', '.join(keywords)
 
                         article_sentiment = round(nlpv2.get_sentiment(articlereply),2)

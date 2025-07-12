@@ -91,7 +91,6 @@ def run_bot(r, replied_articles_id,approvedlist):
                         error_database.to_csv(config.errorlist)
 
                     fullreply ="Title: " + article_title + " \n\n"
-                    fullreply = fullreply + "Quicklinks for GE2025: https://linktr.ee/sg_ge2025 \n\n"
                     fullreply = fullreply + keywords_reply + sentiment_reply
                     fullreply = fullreply + articlereply + similarity_reply + "\n***\n" + "Article id " + submission.id + " | " + str(nReplies) + " articles replied in my database. [v" + config.version + "](https://github.com/Wormsblink/sneakpeakbot) " + "| PM SG_wormsbot if bot is down."
                     

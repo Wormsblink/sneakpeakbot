@@ -1,14 +1,20 @@
+import config
+
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+
 from newspaper import Article
 from urllib import request
 from bs4 import BeautifulSoup
 
 def get_html(article_url):
 
+    chrome_service = Service(executable_path=config.chromedriver)
+
     options = webdriver.ChromeOptions()
     options.add_argument("--headless=new")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-    driver = webdriver.Chrome(options = options)
+    driver = webdriver.Chrome(service=chrome_service,options = options)
     driver.get(article_url)
     html = driver.page_source
     driver.quit()

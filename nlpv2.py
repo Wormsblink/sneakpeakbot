@@ -101,10 +101,10 @@ def check_keywords(keywords_string, replied_database):
     similar_database["similarity_value"] = ""
     replied_database_keywords = replied_database["keywords"].tolist()
 
-    temp_new_keywords = nlp2(' '.join([str(t) for t in keywords_string.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+    temp_new_keywords = nlp2(' '.join([str(t) for t in keywords_string.split() if (not str(t) in list(STOP_WORDS) or not str(t) in punctuation)]))
 
     for replied_keywords in replied_database_keywords:
-        temp_replied_keywords = nlp2(' '.join([str(t) for t in replied_keywords.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+        temp_replied_keywords = nlp2(' '.join([str(t) for t in replied_keywords.split() if (not str(t) in list(STOP_WORDS) or not str(t) in punctuation)]))
         
         similarity_value = temp_new_keywords.similarity(temp_replied_keywords)
         
@@ -122,10 +122,10 @@ def check_similarity(article_title, replied_database):
     similar_database["similarity_value"] = ""
     replied_articles_titles = replied_database["title"].tolist()
 
-    temp_article_title = nlp(' '.join([str(t) for t in article_title.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+    temp_article_title = nlp(' '.join([str(t) for t in article_title.split() if (not str(t) in list(STOP_WORDS) or not str(t) in punctuation)]))
     
     for replied_title in replied_articles_titles:
-        temp_replied_title = nlp(' '.join([str(t) for t in replied_title.split() if (not t in list(STOP_WORDS) or not t in punctuation)]))
+        temp_replied_title = nlp(' '.join([str(t) for t in replied_title.split() if (not str(t) in list(STOP_WORDS) or not str(t) in punctuation)]))
         
         similarity_value = temp_article_title.similarity(temp_replied_title)
         similar_database["similarity_value"][similar_database.title == replied_title] = similarity_value
